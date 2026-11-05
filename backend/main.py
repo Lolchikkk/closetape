@@ -21,9 +21,12 @@ class JobRequest(BaseModel):
     transcribe: bool = False
 
 def tool_path(name):
-    folder = os.getenv("CLOSETAPE_BIN_DIR", "")
-    candidate = Path(folder) / (name + (".exe" if os.name == "nt" else ""))
-    return str(candidate) if candidate.is_file() else name
+    exe = name + (".exe" if os.name == "nt" else "")
+    candidates = [Path(os.getenv("CLOSETAPE_BIN_DIR", "")) / exe, APP_DIR / "tools" / exe, APP_DIR / exe]
+    for candidate in candidates:
+        if candidate.is_file():
+            return str(candidate)
+    return name
 
 def run(cmd, timeout=None):
     args = list(cmd)
@@ -33,7 +36,7 @@ def run(cmd, timeout=None):
 
 def valid_vod(url):
     p = urlparse(url)
-    return p.scheme == "https" and p.hostname in {"twitch.tv","www.twitch.tv","m.twitch.tv"} and re.fullmatch(r"/videos/\\d+/?", p.path) is not None
+    return p.scheme == "https" and p.hostname in {"twitch.tv","www.twitch.tv","m.twitch.tv"} and re.fullmatch(r"/videos/\d+/?", p.path) is not None
 
 def label(seconds):
     return str(timedelta(seconds=max(0,int(seconds)))) if seconds >= 3600 else str(timedelta(seconds=max(0,int(seconds))))[2:]
