@@ -1,0 +1,47 @@
+name: Build Closetape for Windows
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '**.py'
+      - 'index.html'
+      - 'requirements.txt'
+      - '.github/workflows/build-windows.yml'
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download FFmpeg tools
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip -OutFile ffmpeg.zip
+          Expand-Archive ffmpeg.zip -DestinationPath ffmpeg
+          $bin = Get-ChildItem ffmpeg -Directory | Select-Object -First 1
+          New-Item -ItemType Directory -Force tools | Out-Null
+          Copy-Item "$($bin.FullName)/bin/ffmpeg.exe" tools/
+          Copy-Item "$($bin.FullName)/bin/ffprobe.exe" tools/
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Build app
+        run: |
+          pyinstaller --noconfirm --clean --onedir --windowed --name Closetape --add-data "index.html;." --add-data "backend;backend" --add-binary "tools/ffmpeg.exe;tools" --add-binary "tools/ffprobe.exe;tools" desktop_app.py
+      - name: Bundle yt-dlp executable
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -OutFile dist/Closetape/yt-dlp.exe
+          Copy-Item tools/ffmpeg.exe dist/Closetape/ -Force
+          Copy-Item tools/ffprobe.exe dist/Closetape/ -Force
+      - name: Package
+        run: Compress-Archive -Path dist/Closetape/* -DestinationPath Closetape-Windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Closetape-Windows
+          path: Closetape-Windows.zip
+          retention-days: 14
