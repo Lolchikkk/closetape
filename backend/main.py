@@ -74,7 +74,7 @@ def detect(video, work, want_transcript, limit, job_id):
             JOBS[job_id]["message"] = "Распознавание речи недоступно; ищем пики звука"
     ranked = []
     if transcript:
-        words = re.compile(r"\\b(вау|нет|что|ах|ого|жесть|давай|боже|смешно|лол|победа|убил|клатч|nice|wow|no|what|oh|lol|insane|crazy|win|clutch|omg)\\b", re.I)
+        words = re.compile(r"\b(вау|нет|что|ах|ого|жесть|давай|боже|смешно|лол|победа|убил|клатч|nice|wow|no|what|oh|lol|insane|crazy|win|clutch|omg)\b", re.I)
         for s in transcript:
             center = (s["start"] + s["end"]) / 2
             sound = max((v for t,v in energy if abs(t-center)<12), default=0)
@@ -157,7 +157,7 @@ def get_job(job_id: str):
 
 @app.get("/api/jobs/{job_id}/clips/{filename}")
 def get_clip(job_id: str,filename: str):
-    if not re.fullmatch(r"closetape_\\d+\\.mp4",filename): raise HTTPException(400,"Недопустимое имя файла")
+    if not re.fullmatch(r"closetape_\d+\.mp4",filename): raise HTTPException(400,"Недопустимое имя файла")
     path=ROOT/job_id/"clips"/filename
     if not path.is_file(): raise HTTPException(404,"Клип не найден")
     return FileResponse(path,media_type="video/mp4",filename=filename)
