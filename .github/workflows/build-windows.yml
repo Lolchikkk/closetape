@@ -31,13 +31,12 @@ jobs:
           pip install -r requirements.txt
       - name: Build app
         run: |
-          pyinstaller --noconfirm --clean --onedir --windowed --name Closetape --add-data "index.html;." --add-data "backend;backend" --add-binary "tools/ffmpeg.exe;tools" --add-binary "tools/ffprobe.exe;tools" desktop_app.py
+          pyinstaller --noconfirm --clean --onedir --windowed --name Closetape --collect-all webview --hidden-import backend.main --add-data "index.html;." --add-data "backend;backend" --add-binary "tools/ffmpeg.exe;tools" --add-binary "tools/ffprobe.exe;tools" desktop_app.py
       - name: Bundle yt-dlp executable
         shell: pwsh
         run: |
-          Invoke-WebRequest https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -OutFile dist/Closetape/yt-dlp.exe
-          Copy-Item tools/ffmpeg.exe dist/Closetape/ -Force
-          Copy-Item tools/ffprobe.exe dist/Closetape/ -Force
+          New-Item -ItemType Directory -Force dist/Closetape/tools | Out-Null
+          Invoke-WebRequest https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -OutFile dist/Closetape/tools/yt-dlp.exe
       - name: Package
         run: Compress-Archive -Path dist/Closetape/* -DestinationPath Closetape-Windows.zip
       - uses: actions/upload-artifact@v4
